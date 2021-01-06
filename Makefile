@@ -10,7 +10,8 @@ git:
 	git push
 
 test:
-	./test.sh
+	make all
+	sudo ./ping.o
 
 clean:
 	rm -f *.o output/1mb.txt

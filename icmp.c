@@ -270,7 +270,7 @@ int main ()
 
     // Create raw socket for IP-RAW (make IP-header by yourself)
     int sock = -1;
-    if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_RAW)) == -1) 
+    if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) 
     {
         fprintf (stderr, "socket() failed with error: %d"
 #if defined _WIN32
