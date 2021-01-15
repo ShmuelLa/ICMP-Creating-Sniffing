@@ -18,29 +18,15 @@
 #include <sys/time.h>
 #endif
 
-// ICMP header len for echo req
 #define ICMP_HDRLEN 8 
-// Checksum algo
 unsigned short calculate_checksum(unsigned short * paddress, int len);
-
-// 1. Change SOURCE_IP and DESTINATION_IP to the relevant for your computer
-// 2. Compile it using MSVC compiler or g++
-// 3. Run it from the account with administrative permissions,
-//    since opening of a raw-socket requires elevated preveledges
-// 4. For debugging and development, run MS Visual Studio (MSVS) as admin by
-//    right-clicking at the icon of MSVS and selecting from the right-click 
-//    menu "Run as administrator"
-//  Note. You can place another IP-source address that does not belong to your
-//  computer (IP-spoofing), i.e. just another IP from your subnet, and the ICMP
-//  still be sent, but do not expect to see ICMP_ECHO_REPLY in most such cases
-//  since anti-spoofing is wide-spread.
 
 #define SOURCE_IP "172.19.93.135"
 #define DESTINATION_IP "8.8.8.8"
 
 int main () {
     struct icmp icmphdr; // ICMP-header
-    char data[IP_MAXPACKET] = "This is the ping.\n";
+    char data[IP_MAXPACKET]; // = "This is the ping.\n";
     int datalen = strlen(data) + 1;
     //===================
     // ICMP header
@@ -78,24 +64,15 @@ int main () {
     int sock = -1;
     if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) 
     {
-        fprintf (stderr, "socket() failed with error: %d"
-#if defined _WIN32
-#else
-			, errno
-#endif
-			);
+        fprintf (stderr, "socket() failed with error: %d", errno);
         fprintf (stderr, "To create a raw socket, the process needs to be run by Admin/root user.\n\n");
         return -1;
     }
     // This socket option IP_HDRINCL says that we are building IPv4 header by ourselves, and
     // the networking in kernel is in charge only for Ethernet header.
-    const int flagOne = 1;
-    if (setsockopt (sock, IPPROTO_IP, IP_HDRINCL,&flagOne,sizeof (flagOne)) == -1) {
-        fprintf (stderr, "setsockopt() failed with error: %d", errno);
-        return -1;
-    }
     // Send the packet using sendto() for sending datagrams.
     if (sendto (sock, packet, ICMP_HDRLEN + datalen, 0, (struct sockaddr *) &dest_in, sizeof (dest_in)) == -1) {
+
         fprintf (stderr, "sendto() failed with error: %d", errno);
         return -1;
     }
