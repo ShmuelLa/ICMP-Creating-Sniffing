@@ -31,6 +31,8 @@ struct ipheader {
 };
 
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
+    (void)args;
+    (void)header;
     struct ethheader *eth = (struct ethheader *)packet;
     if (ntohs(eth->ether_type) == 0x0800) { // 0x0800 or 2048 is IP type
         struct ipheader * ip = (struct ipheader *)(packet + sizeof(struct ethheader)); 
