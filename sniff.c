@@ -4,19 +4,17 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/ip.h>
-#include<netinet/ip_icmp.h>
-#include<net/ethernet.h>
+#include <netinet/ip_icmp.h>
+#include <net/ethernet.h>
 
-#define	ETHER_ADDR_LEN 6
+static int p_count = 1;
 
-/* Ethernet header */
 struct ethheader {
   u_char  ether_dhost[ETHER_ADDR_LEN]; /* destination host address */
   u_char  ether_shost[ETHER_ADDR_LEN]; /* source host address */
   u_short ether_type;                  /* IP? ARP? RARP? etc */
 };
 
-/* IP Header */
 struct ipheader {
   unsigned char      iph_ihl:4, //IP header length
                      iph_ver:4; //IP version
@@ -34,34 +32,34 @@ struct ipheader {
 
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
     struct ethheader *eth = (struct ethheader *)packet;
+    if (ntohs(eth->ether_type) == 0x0800) { // 0x0800 or 2048 is IP type
+        struct ipheader * ip = (struct ipheader *)(packet + sizeof(struct ethheader)); 
+        int ip_hdr_len = ip->iph_ihl * 4;
 
-    printf("%d dhost =\n" ,ntohs(eth->ether_dhost));
-    printf("%d shost =\n" ,ntohs(eth->ether_shost));
-    printf("%d type =\n" ,ntohs(eth->ether_type));
+        struct icmphdr *icmph = (struct icmphdr *)(packet + sizeof(struct ethheader) + ip_hdr_len);
 
-    if (ntohs(eth->ether_type) == 0x0800) { // 0x0800 is IP type
-    struct ipheader * ip = (struct ipheader *)
-                           (packet + sizeof(struct ethheader)); 
+        int icmp_header_len =  sizeof(struct ethhdr) + ip_hdr_len + sizeof icmph;
 
-    printf("       From: %s\n", inet_ntoa(ip->iph_sourceip));  
-    printf("         To: %s\n", inet_ntoa(ip->iph_destip)); 
-        switch(ip->iph_protocol) {                               
-            case IPPROTO_TCP:
-                printf("   Protocol: TCP\n");
-                return;
-            case IPPROTO_UDP:
-                printf("   Protocol: UDP\n");
-                return;
-            case IPPROTO_ICMP:
-                printf("   Protocol: ICMP\n");
-                return;
-            default:
-                printf("   Protocol: others\n");
-                return;
+        if (ip->iph_protocol == IPPROTO_ICMP) {
+            printf("No.: %d | Protocol: ICMP | ", p_count);
+            p_count++;
+            printf("SRC_IP: %s | ", inet_ntoa(ip->iph_sourceip));  
+            printf("DST_IP: %s | ", inet_ntoa(ip->iph_destip)); 
+            if ((unsigned int)(icmph->type) == ICMP_ECHOREPLY) {
+                printf("Type: Reply");
+            }
+            if ((unsigned int)(icmph->type) == ICMP_ECHO) {
+                printf("Type: Request");
+            }
+            printf(" | Code: %d | ", (unsigned int)(icmph->code));
+            //printf("%d", (icmph->code));
+            printf("Checksum %d \n",ntohs(icmph->checksum));
+            printf("Data: ");
+            printf("%s", packet + icmp_header_len);
+            printf("\n");
+            return;
         }
     }
-    printf("\n");
-
     //struct iphdr *iph = (struct iphdr*)(packet + sizeof(struct ethheader));
 }
 
@@ -70,21 +68,15 @@ int main() {
     struct bpf_program fp;
     bpf_u_int32 net;
     char errbuf[PCAP_ERRBUF_SIZE];
-    char filter_exp[] = "ip proto icmp";
-    
-    //open live pcap session, we sniif on "any" interface which shows everything
-    handle = pcap_open_live("lo", BUFSIZ, 1, 1000, errbuf);
+    char filter_exp[] = "ip proto icmp";    
+    handle = pcap_open_live("enp0s3", BUFSIZ, 1, 1000, errbuf);
     if (handle == NULL) {
         perror("Live session opening error");
     }
-
     pcap_compile(handle, &fp, filter_exp, 0, net);      
     pcap_setfilter(handle, &fp);
 
-    // Step 3: Capture packets
     pcap_loop(handle, -1, got_packet, NULL);                
-    
-    //close the socket
     pcap_close(handle);
     return 0;
 }

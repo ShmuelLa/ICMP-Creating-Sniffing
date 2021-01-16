@@ -17,12 +17,9 @@
 #define ICMP_HDRLEN 8 
 unsigned short calculate_checksum(unsigned short * paddress, int len);
 
-#define SOURCE_IP "10.0.2.15"
-#define DESTINATION_IP "8.8.8.8"
-
 int main () {
     struct icmp icmphdr; // ICMP-header
-    char data[IP_MAXPACKET] = "This is the ping.\n";
+    char data[IP_MAXPACKET] = "Shmuel n Gidon Ex4 custom Ping :D\n";
     int datalen = strlen(data) + 1;
     //===================
     // ICMP header
@@ -51,6 +48,7 @@ int main () {
     struct sockaddr_in dest_in;
     memset (&dest_in, 0, sizeof (struct sockaddr_in));
     dest_in.sin_family = AF_INET;
+    dest_in.sin_addr.s_addr = inet_addr("8.8.8.8");
     // Create raw socket for IP-RAW (make IP-header by yourself)
     int sock = -1;
     if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) 

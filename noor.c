@@ -284,10 +284,10 @@ void print_icmp_packet(const u_char * Buffer , int Size)
 
 	fprintf(logfile , "IP Header\n");
 	PrintData(Buffer,iphdrlen);
-		
+
 	fprintf(logfile , "UDP Header\n");
 	PrintData(Buffer + iphdrlen , sizeof icmph);
-		
+	
 	fprintf(logfile , "Data Payload\n");	
 	
 	//Move the pointer ahead and reduce the size of string
