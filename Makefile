@@ -13,5 +13,9 @@ test:
 	make all
 	sudo ./ping.o
 
+nu:
+	$(CC) myNuPing.c $(CFLAG) ping.o
+	sudo ./ping.o
+
 clean:
 	rm -f *.o output/1mb.txt
