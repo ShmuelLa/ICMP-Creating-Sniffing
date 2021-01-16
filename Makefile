@@ -10,12 +10,12 @@ git:
 	git commit -m "$m"
 	git push
 
-test:
+ping:
 	$(CC) icmp.c $(CFLAG) ping.o
 	sudo ./ping.o
 
 sniff:
-	make all
+	$(CC) sniff.c $(CFLAG) sniff.o -lpcap
 	sudo ./sniff.o
 
 noor:
