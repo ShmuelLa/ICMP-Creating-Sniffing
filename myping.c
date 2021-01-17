@@ -1,7 +1,6 @@
 // icmp.cpp
 // Sending ICMP Echo Requests using Raw-sockets.
 #include <stdio.h>
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -19,8 +18,9 @@ unsigned short calculate_checksum(unsigned short * paddress, int len);
 
 int main () {
     struct icmp icmphdr; // ICMP-header
-    char data[IP_MAXPACKET] = "Shmuel n Gidon Ex4 custom Ping :D\n";
+    char data[IP_MAXPACKET] = "This is a custom Gidon_Shmuel Ping :) \n";
     int datalen = strlen(data) + 1;
+
     //===================
     // ICMP header
     //===================
@@ -51,8 +51,7 @@ int main () {
     dest_in.sin_addr.s_addr = inet_addr("8.8.8.8");
     // Create raw socket for IP-RAW (make IP-header by yourself)
     int sock = -1;
-    if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) 
-    {
+    if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
         fprintf (stderr, "socket() failed with error: %d", errno);
         fprintf (stderr, "To create a raw socket, the process needs to be run by Admin/root user.\n\n");
         return -1;
@@ -70,8 +69,7 @@ int main () {
 }
 
 // Compute checksum (RFC 1071).
-unsigned short calculate_checksum(unsigned short * paddress, int len)
-{
+unsigned short calculate_checksum(unsigned short * paddress, int len) {
 	int nleft = len;
 	int sum = 0;
 	unsigned short * w = paddress;

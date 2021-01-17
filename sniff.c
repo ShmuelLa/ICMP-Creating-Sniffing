@@ -37,11 +37,8 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     if (ntohs(eth->ether_type) == 0x0800) { // 0x0800 or 2048 is IP type
         struct ipheader * ip = (struct ipheader *)(packet + sizeof(struct ethheader)); 
         int ip_hdr_len = ip->iph_ihl * 4;
-
         struct icmphdr *icmph = (struct icmphdr *)(packet + sizeof(struct ethheader) + ip_hdr_len);
-
         int icmp_header_len =  sizeof(struct ethhdr) + ip_hdr_len + sizeof icmph;
-
         if (ip->iph_protocol == IPPROTO_ICMP) {
             printf("No.: %d | Protocol: ICMP | ", p_count);
             p_count++;
@@ -54,7 +51,6 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
                 printf("Type: Request");
             }
             printf(" | Code: %d | ", (unsigned int)(icmph->code));
-            //printf("%d", (icmph->code));
             printf("Checksum %d \n",ntohs(icmph->checksum));
             printf("Data: ");
             printf("%s", packet + icmp_header_len);
@@ -62,13 +58,12 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
             return;
         }
     }
-    //struct iphdr *iph = (struct iphdr*)(packet + sizeof(struct ethheader));
 }
 
 int main() {
     pcap_t *handle;
     struct bpf_program fp;
-    bpf_u_int32 net;
+    bpf_u_int32 net = 0;
     char errbuf[PCAP_ERRBUF_SIZE];
     char filter_exp[] = "ip proto icmp";    
     handle = pcap_open_live("enp0s3", BUFSIZ, 1, 1000, errbuf);
@@ -77,7 +72,6 @@ int main() {
     }
     pcap_compile(handle, &fp, filter_exp, 0, net);      
     pcap_setfilter(handle, &fp);
-
     pcap_loop(handle, -1, got_packet, NULL);                
     pcap_close(handle);
     return 0;
