@@ -1,5 +1,3 @@
-// icmp.cpp
-// Sending ICMP Echo Requests using Raw-sockets.
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,15 +10,17 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <time.h>
+#include <sys/time.h>
 
 #define ICMP_HDRLEN 8 
 unsigned short calculate_checksum(unsigned short * paddress, int len);
 
 int main () {
+    struct timespec start, end;
     struct icmp icmphdr; // ICMP-header
     char data[IP_MAXPACKET] = "This is a custom Gidon_Shmuel Ping :) \n";
     int datalen = strlen(data) + 1;
-
     //===================
     // ICMP header
     //===================
@@ -59,16 +59,32 @@ int main () {
     // This socket option IP_HDRINCL says that we are building IPv4 header by ourselves, and
     // the networking in kernel is in charge only for Ethernet header.
     // Send the packet using sendto() for sending datagrams.
-    if (sendto (sock, packet, ICMP_HDRLEN + datalen, 0, (struct sockaddr *) &dest_in, sizeof (dest_in)) == -1) {
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    if (sendto (sock, packet, ICMP_HDRLEN+datalen, 0, (struct sockaddr *) &dest_in, sizeof (dest_in)) == -1) {
         fprintf (stderr, "sendto() failed with error: %d", errno);
         return -1;
     }
-    // Close the raw socket descriptor.
-  close(sock);
-  return 0;
+    if (recvfrom (sock, &packet, ICMP_HDRLEN+datalen , 0, NULL, (socklen_t*)sizeof (struct sockaddr)) < 0)  {
+        fprintf (stderr, "recvfrom() failed with error: %d", errno);
+        return -1; 
+    }
+    else {
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        uint64_t start_nsec = start.tv_nsec;
+        uint64_t end_nsec = end.tv_nsec;
+        double operation_time_micros = (end_nsec - start_nsec) * 0.001;
+        double operation_time_ms = (end_nsec - start_nsec) * 1e-6;
+        printf("Ping received with RTT:");
+        printf (" %1.1f ", operation_time_ms);
+        printf("milliseconds | ");
+        printf (" %1.1f ", operation_time_micros);
+        printf("microsoeconds \n");
+
+    }
+    close(sock);
+    return 0;
 }
 
-// Compute checksum (RFC 1071).
 unsigned short calculate_checksum(unsigned short * paddress, int len) {
 	int nleft = len;
 	int sum = 0;
